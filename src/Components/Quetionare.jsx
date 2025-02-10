@@ -62,7 +62,7 @@ const Quiz = () => {
       };
 
       console.log("userDataToSubmit", userDataToSubmit);
-      const response = await axios.post('http://localhost:5000/api/submitUserData', userDataToSubmit);
+      const response = await axios.post('https://quetionare-server.vercel.app/api/submitUserData', userDataToSubmit);
       console.log("Response:", response);
       setPdf(`data:application/pdf;base64,${response.data.pdf}`);
       setFormSubmitted(true); // Set form submitted state
