@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Import axios
 import questionsData from '../data/questions.json';
 import optionsData from '../data/options.json';
 
@@ -10,29 +9,23 @@ const Quiz = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialQuestionIndex);
   const [userData, setUserData] = useState({ name: '', surname: '', email: '' });
   const [quizFinished, setQuizFinished] = useState(false);
-  const [questionTransition, setQuestionTransition] = useState(false); // For smooth transitions
+  const [questionTransition, setQuestionTransition] = useState(false);
   const [pdf, setPdf] = useState('');
-  const [formSubmitted, setFormSubmitted] = useState(false); // New state for form submission
+  const [formSubmitted, setFormSubmitted] = useState(false);
   console.log("pdf", pdf);
 
-  // Load options for the current question
   const loadOptions = (questionName) => {
     return optionsData.filter(opt => opt.questionName === questionName);
   };
 
-  // Handle answer selection
   const handleOptionSelection = (selectedOption) => {
     setTotalPoints(prevPoints => prevPoints + selectedOption.points);
-
     setAnswersList(prevAnswers => [
       ...prevAnswers,
       { questionName: questionsData[currentQuestionIndex].questionText, selectedAnswer: selectedOption.optionText, points: selectedOption.points }
     ]);
 
-    // Set transition effect before loading the next question
     setQuestionTransition(true);
-
-    // Load next question or finish quiz
     setTimeout(() => {
       if (selectedOption.followUpQuestion) {
         const nextQuestionIndex = questionsData.findIndex(q => q.questionName === selectedOption.followUpQuestion);
@@ -46,11 +39,10 @@ const Quiz = () => {
           setQuizFinished(true);
         }
       }
-      setQuestionTransition(false); // Reset transition flag after transition is done
-    }, 1000); // Wait for transition to finish before setting next question
+      setQuestionTransition(false);
+    }, 1000);
   };
 
-  // Handle form submission
   const submitUserDetails = async () => {
     try {
       const userDataToSubmit = {
@@ -62,17 +54,28 @@ const Quiz = () => {
       };
 
       console.log("userDataToSubmit", userDataToSubmit);
-      const response = await axios.post('https://quetionare-server.vercel.app/api/submitUserData', userDataToSubmit);
-      console.log("Response:", response);
-      setPdf(response.data.data.pdfUrl); // Update to use response.data.data.pdfUrl
-      setFormSubmitted(true); // Set form submitted state
-      // Send response data to parent Wix site
-      window.parent.postMessage({ type: "quizSubmission", data: response.data }, "*");  
+      
+      const response = await fetch('https://quetionare-server.vercel.app/api/submitUserData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userDataToSubmit)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const responseData = await response.json();
+      console.log("Response:", responseData);
+      setPdf(responseData.data.pdfUrl);
+      setFormSubmitted(true);
+      
+      window.parent.postMessage({ type: "quizSubmission", data: responseData }, "*");  
     } catch (error) {
       console.error("Error submitting data:", error);
-       // Send error message to parent Wix site
-    window.parent.postMessage({ type: "quizSubmissionError", error: error.message }, "*");
-
+      window.parent.postMessage({ type: "quizSubmissionError", error: error.message }, "*");
     }
   };
 
