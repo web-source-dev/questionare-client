@@ -64,7 +64,7 @@ const Quiz = () => {
       console.log("userDataToSubmit", userDataToSubmit);
       const response = await axios.post('https://quetionare-server.vercel.app/api/submitUserData', userDataToSubmit);
       console.log("Response:", response);
-      setPdf(`data:application/pdf;base64,${response.data.pdf}`);
+      setPdf(`data:application/pdf;base64,${response.data.data.pdfUrl}`); // Update to use response.data.data.pdfUrl
       setFormSubmitted(true); // Set form submitted state
       // Send response data to parent Wix site
       window.parent.postMessage({ type: "quizSubmission", data: response.data }, "*");  
